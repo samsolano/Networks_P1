@@ -2,6 +2,7 @@
 #include "checksum.h"
 #include <pcap.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #define PSEUDO_LENGTH 12
 #define ETHERNET_LENGTH 14
@@ -21,10 +22,8 @@ uint8_t ip_header_len = 0;
 int main (int argc, char *argv[]) {
 
     char errbuf[PCAP_ERRBUF_SIZE];
-    char inputFile[300] = "./";
-    strcat(inputFile, argv[1]);
 
-    pcap_t *file = pcap_open_offline(inputFile, errbuf);
+    pcap_t *file = pcap_open_offline(argv[1], errbuf);
     if(!file)
     {
         fprintf(stderr, "Error: %s\n", errbuf);
@@ -46,8 +45,8 @@ void packet_handler(u_char *user, const struct pcap_pkthdr *h, const u_char *byt
 void udp_header(const struct pcap_pkthdr *h, const u_char *bytes) {
 
     printf("\n\tUDP Header\n\t\t");
-    uint16_t source_port = (bytes[ip_header_len + 14] << 8) | bytes[ip_header_len + 15];
-    uint16_t dest_port = (bytes[ip_header_len + 16] << 8) | bytes[ip_header_len + 17];
+    uint16_t source_port = ntohs(*(uint16_t *)&bytes[ip_header_len + 14]);
+    uint16_t dest_port = ntohs(*(uint16_t *)&bytes[ip_header_len + 16]);
     if (source_port == 53) { printf("Source Port:  DNS\n\t\t"); }
     else { printf("Source Port:  %d\n\t\t", source_port); }
     if (dest_port == 53) { printf("Dest Port:  DNS\n"); }
@@ -59,25 +58,25 @@ void tcp_header(const struct pcap_pkthdr *h, const u_char *bytes) {
     uint16_t tcp_start = ip_header_len + ETHERNET_LENGTH;
 
     printf("\n\tTCP Header\n\t\t");
-    uint16_t source_port = (bytes[tcp_start] << 8) | bytes[tcp_start + 1];
-    uint16_t dest_port = (bytes[tcp_start + 2] << 8) | bytes[tcp_start + 3];
+    uint16_t source_port = ntohs(*(uint16_t *)&bytes[tcp_start]);
+    uint16_t dest_port = ntohs(*(uint16_t *)&bytes[tcp_start + 2]);
     if (source_port == 80) { printf("Source Port:  HTTP\n\t\t"); }
     else { printf("Source Port:  %d\n\t\t", source_port); }
     if (dest_port == 80) { printf("Dest Port:  HTTP\n\t\t"); }
     else { printf("Dest Port:  %d\n\t\t", dest_port); }
-    uint32_t seq_number = (bytes[tcp_start + 4] << 24) | (bytes[tcp_start + 5] << 16) | (bytes[tcp_start + 6] << 8) | bytes[tcp_start + 7];
+
+    uint32_t seq_number = ntohl(*(uint32_t *)&bytes[tcp_start + 4]);
     printf("Sequence Number: %u\n\t\t", seq_number);
-    uint32_t ack_number = (bytes[tcp_start + 8] << 24) | (bytes[tcp_start + 9] << 16) | (bytes[tcp_start + 10] << 8) | bytes[tcp_start + 11];
+    uint32_t ack_number = ntohl(*(uint32_t *)&bytes[tcp_start + 8]);
     printf("ACK Number: %u\n\t\t", ack_number);
     printf("Data Offset (bytes): %d\n\t\t", ((bytes[tcp_start + 12] & 0xf0) >> 4) * 4);
     printf("SYN Flag: %s\n\t\t", (bytes[tcp_start + 13] & 0x2) == 2 ? "Yes" : "No");
     printf("RST Flag: %s\n\t\t", (bytes[tcp_start + 13] & 0x4) == 4 ? "Yes" : "No");
     printf("FIN Flag: %s\n\t\t", (bytes[tcp_start + 13] & 0x1) == 1 ? "Yes" : "No");
     printf("ACK Flag: %s\n\t\t", (bytes[tcp_start + 13] & 0x10) == 16 ? "Yes" : "No");
-    printf("Window Size: %d\n\t\t", (bytes[tcp_start + 14] << 8) | bytes[tcp_start + 15]);
+    printf("Window Size: %d\n\t\t", (ntohs(*(uint16_t *)&bytes[tcp_start + 14]))); 
     tcp_checksum(h, bytes);
 }
-
 
 void tcp_checksum(const struct pcap_pkthdr *h, const u_char *bytes) {
 
@@ -111,7 +110,7 @@ void ip_header(const struct pcap_pkthdr *h, const u_char *bytes) {
     printf("TTL: %d\n\t\t", bytes[22]);
     ip_protocol = (bytes[23] == 17) ? 0 : (bytes[23] == 6 ? 1 : (bytes[23] == 1 ? 2 : 3));
     printf("Protocol: %s\n\t\t", ip_protocol == 2 ? "ICMP" : (ip_protocol == 1 ? "TCP" : (ip_protocol == 0 ? "UDP" : "Unknown")));
-    printf("Checksum: %s (0x%04x)\n\t\t", in_cksum((unsigned short *)&bytes[14], ip_header_len) == 0 ? "Correct" : "Incorrect", (bytes[24] << 8) | bytes[25]);
+    printf("Checksum: %s (0x%04x)\n\t\t", in_cksum((unsigned short *)&bytes[14], ip_header_len) == 0 ? "Correct" : "Incorrect", ntohs(*(uint16_t *)&bytes[24]));
     printf("Sender IP: %d.%d.%d.%d\n\t\t", bytes[26], bytes[27], bytes[28], bytes[29]);
     printf("Dest IP: %d.%d.%d.%d\n", bytes[30], bytes[31], bytes[32], bytes[33]);
     if(bytes[23] != 1) { return; }
@@ -138,6 +137,7 @@ void ethernet_header(const struct pcap_pkthdr *h, const u_char *bytes) {
     printf("\nPacket number: %d  Packet Len: %d\n\n", packet_count++, h->len);
     printf("\tEthernet Header\n");
     printf("\t\tDest MAC: ");
+    
     for(uint16_t i = 0; i < 6; i++) {
         printf("%x%c", bytes[i], (i < 5) ? ':' : '\n');
     }
@@ -145,12 +145,13 @@ void ethernet_header(const struct pcap_pkthdr *h, const u_char *bytes) {
     for(uint16_t i = 6; i < 12; i++) {
         printf("%x%c", bytes[i], (i < 11) ? ':' : '\n');
     }
+
     printf("\t\tType: ");
-    if(((bytes[12] << 8) | bytes[13]) == 0x0806) {
+    if(ntohs(*(uint16_t *)&bytes[12]) == 0x0806) {
         printf("ARP\n\n\t");
         arp_header(h, bytes);
     }
-    else if(((bytes[12] << 8) | bytes[13]) == 0x0800) {
+    else if(ntohs(*(uint16_t *)&bytes[12]) == 0x0800) {
         printf("IP\n\n\t");
         ip_header(h, bytes);
     }   
