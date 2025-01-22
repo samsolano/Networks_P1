@@ -2,18 +2,19 @@
 triple:          'arm64-apple-darwin'
 binary-path:     trace
 relocations:
-  - { offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100002A9C, symSize: 0xEC }
-  - { offset: 0x3F, size: 0x8, addend: 0x0, symName: _packet_count, symObjAddr: 0x102C, symBinAddr: 0x100008000, symSize: 0x0 }
-  - { offset: 0x66, size: 0x8, addend: 0x0, symName: _ip_protocol, symObjAddr: 0x102E, symBinAddr: 0x100008002, symSize: 0x0 }
-  - { offset: 0x8D, size: 0x8, addend: 0x0, symName: _ip_header_len, symObjAddr: 0x30BC, symBinAddr: 0x100008003, symSize: 0x0 }
-  - { offset: 0xB6, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100002A9C, symSize: 0xEC }
-  - { offset: 0x108, size: 0x8, addend: 0x0, symName: _packet_handler, symObjAddr: 0xEC, symBinAddr: 0x100002B88, symSize: 0x84 }
-  - { offset: 0x148, size: 0x8, addend: 0x0, symName: _ethernet_header, symObjAddr: 0x170, symBinAddr: 0x100002C0C, symSize: 0x21C }
-  - { offset: 0x1B2, size: 0x8, addend: 0x0, symName: _udp_header, symObjAddr: 0x38C, symBinAddr: 0x100002E28, symSize: 0x108 }
-  - { offset: 0x200, size: 0x8, addend: 0x0, symName: _tcp_header, symObjAddr: 0x494, symBinAddr: 0x100002F30, symSize: 0x38C }
-  - { offset: 0x278, size: 0x8, addend: 0x0, symName: _tcp_checksum, symObjAddr: 0x820, symBinAddr: 0x1000032BC, symSize: 0x1F0 }
-  - { offset: 0x2FD, size: 0x8, addend: 0x0, symName: _ip_header, symObjAddr: 0xA10, symBinAddr: 0x1000034AC, symSize: 0x430 }
-  - { offset: 0x33D, size: 0x8, addend: 0x0, symName: _arp_header, symObjAddr: 0xE40, symBinAddr: 0x1000038DC, symSize: 0x1EC }
-  - { offset: 0x4BD, size: 0x8, addend: 0x0, symName: _in_cksum, symObjAddr: 0x0, symBinAddr: 0x100003AC8, symSize: 0xD4 }
-  - { offset: 0x4D1, size: 0x8, addend: 0x0, symName: _in_cksum, symObjAddr: 0x0, symBinAddr: 0x100003AC8, symSize: 0xD4 }
+  - { offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100002A2C, symSize: 0x120 }
+  - { offset: 0x3F, size: 0x8, addend: 0x0, symName: _packet_count, symObjAddr: 0x10A4, symBinAddr: 0x100008000, symSize: 0x0 }
+  - { offset: 0x66, size: 0x8, addend: 0x0, symName: _ip_protocol, symObjAddr: 0x10A6, symBinAddr: 0x100008002, symSize: 0x0 }
+  - { offset: 0x8D, size: 0x8, addend: 0x0, symName: _ip_header_len, symObjAddr: 0x3280, symBinAddr: 0x100008003, symSize: 0x0 }
+  - { offset: 0xC1, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100002A2C, symSize: 0x120 }
+  - { offset: 0x122, size: 0x8, addend: 0x0, symName: _packet_handler, symObjAddr: 0x120, symBinAddr: 0x100002B4C, symSize: 0x84 }
+  - { offset: 0x162, size: 0x8, addend: 0x0, symName: _ethernet_header, symObjAddr: 0x1A4, symBinAddr: 0x100002BD0, symSize: 0x21C }
+  - { offset: 0x1CC, size: 0x8, addend: 0x0, symName: _udp_header, symObjAddr: 0x3C0, symBinAddr: 0x100002DEC, symSize: 0x108 }
+  - { offset: 0x21A, size: 0x8, addend: 0x0, symName: _tcp_header, symObjAddr: 0x4C8, symBinAddr: 0x100002EF4, symSize: 0x38C }
+  - { offset: 0x292, size: 0x8, addend: 0x0, symName: _tcp_checksum, symObjAddr: 0x854, symBinAddr: 0x100003280, symSize: 0x210 }
+  - { offset: 0x317, size: 0x8, addend: 0x0, symName: __OSSwapInt16, symObjAddr: 0xA64, symBinAddr: 0x100003490, symSize: 0x24 }
+  - { offset: 0x33F, size: 0x8, addend: 0x0, symName: _ip_header, symObjAddr: 0xA88, symBinAddr: 0x1000034B4, symSize: 0x430 }
+  - { offset: 0x37F, size: 0x8, addend: 0x0, symName: _arp_header, symObjAddr: 0xEB8, symBinAddr: 0x1000038E4, symSize: 0x1EC }
+  - { offset: 0x50C, size: 0x8, addend: 0x0, symName: _in_cksum, symObjAddr: 0x0, symBinAddr: 0x100003AD0, symSize: 0xD4 }
+  - { offset: 0x520, size: 0x8, addend: 0x0, symName: _in_cksum, symObjAddr: 0x0, symBinAddr: 0x100003AD0, symSize: 0xD4 }
 ...

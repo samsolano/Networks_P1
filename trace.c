@@ -14,7 +14,6 @@ void udp_header(const struct pcap_pkthdr *h, const u_char *bytes);
 void tcp_header(const struct pcap_pkthdr *h, const u_char *bytes);
 void tcp_checksum(const struct pcap_pkthdr *h, const u_char *bytes);
 
-// uint8_t ethernet_type = 0;
 uint16_t packet_count = 1;
 int8_t ip_protocol = 3; // 0 is udp, 1 is tcp, 2 is icmp
 uint8_t ip_header_len = 0;
@@ -22,7 +21,10 @@ uint8_t ip_header_len = 0;
 int main (int argc, char *argv[]) {
 
     char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_t *file = pcap_open_offline("./Trace_Files/UDPfile.pcap", errbuf);
+    char inputFile[300] = "./";
+    strcat(inputFile, argv[1]);
+
+    pcap_t *file = pcap_open_offline(inputFile, errbuf);
     if(!file)
     {
         fprintf(stderr, "Error: %s\n", errbuf);
@@ -37,7 +39,6 @@ int main (int argc, char *argv[]) {
 void packet_handler(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes) {
 
     ethernet_header(h, bytes);
-    // (ethernet_type == 1) ? arp_header(h, bytes) : ip_header(h, bytes);
     if (ip_protocol == 0) { udp_header(h, bytes); }
     else if (ip_protocol == 1) { tcp_header(h, bytes); }
 }
@@ -78,48 +79,25 @@ void tcp_header(const struct pcap_pkthdr *h, const u_char *bytes) {
 }
 
 
-//start of tcp is 42
-//thought start was 34
-// so 38 => + 4, 40 => + 6
-
 void tcp_checksum(const struct pcap_pkthdr *h, const u_char *bytes) {
 
-    u_char pseudo_header[12] = {0};
-    memcpy(pseudo_header, &bytes[26], 8);
-    pseudo_header[9] = 6;
+    uint16_t pseudo_header[6] = {0};
+    memcpy(pseudo_header, &bytes[ETHERNET_LENGTH + 12], 8);
+    pseudo_header[4] = 0x600;
+    uint16_t ip_total_length = ntohs(*(uint16_t*)&bytes[16]);
+    uint16_t tcp_length = htons(ip_total_length - ip_header_len);
 
-    uint8_t tcp_header_len = ((bytes[46] & 0xf0) >> 4) * 4;
-    uint16_t tcp_payload_length = h->len - tcp_header_len - 14 - ip_header_len;
-    uint16_t total_tcp_length = tcp_header_len + tcp_payload_length;
-
-    pseudo_header[10] = total_tcp_length & 0xff00;
-    pseudo_header[11] = total_tcp_length & 0xff;
-
-    u_char tcp_with_pseudo[total_tcp_length + PSEUDO_LENGTH];
-    memset(tcp_with_pseudo, '\0', total_tcp_length + PSEUDO_LENGTH);
-    memcpy(tcp_with_pseudo, &pseudo_header, PSEUDO_LENGTH);
-    memcpy(tcp_with_pseudo + PSEUDO_LENGTH, &bytes[34], total_tcp_length);
-
-
+    memcpy(pseudo_header + 5, &tcp_length, 2);
+    uint16_t tcp_length_seg = ip_total_length - ip_header_len;
+    uint16_t tcp_with_pseudo[tcp_length_seg + PSEUDO_LENGTH];
+    memcpy(&tcp_with_pseudo, pseudo_header, PSEUDO_LENGTH);
+    memcpy(&tcp_with_pseudo[6], &bytes[ETHERNET_LENGTH + ip_header_len], tcp_length_seg);
 
     printf("Checksum: %s (0x%04x)\n", 
-        in_cksum((unsigned short *)&tcp_with_pseudo, total_tcp_length + PSEUDO_LENGTH)  == 0 ? "Correct" : "Incorrect", 
-        (bytes[50] << 8) | bytes[51]);
+        in_cksum((unsigned short *)&tcp_with_pseudo, tcp_length_seg + PSEUDO_LENGTH)  == 0 ? "Correct" : "Incorrect", 
+        ntohs(*(uint16_t*)&bytes[ETHERNET_LENGTH + ip_header_len + 16]));
 
-    // printf("\ntcp len: %d, 10: %d, 11: %d\n\n", total_tcp_length, pseudo_header[10], pseudo_header[11]);
 }
-
-    // printf("\ntcp len: %d, 10: %d, 11: %d\n\n", total_tcp_length, pseudo_header[10], pseudo_header[11]);
-
-    // for (int i = 0; i < total_tcp_length + 12; i++) {
-    //     printf("%02x ", tcp_with_pseudo[i]);
-    // }
-    // printf("\n");
-
-
-// == 0 ? "Correct" : "Incorrect"
-
-// diff -y Trace_Files/largeMix.out out.out         ./trace > out.out  
 
 void ip_header(const struct pcap_pkthdr *h, const u_char *bytes) {
 
@@ -167,9 +145,6 @@ void ethernet_header(const struct pcap_pkthdr *h, const u_char *bytes) {
     for(uint16_t i = 6; i < 12; i++) {
         printf("%x%c", bytes[i], (i < 11) ? ':' : '\n');
     }
-
-    // printf("\nether type: %x, var: %d\n", ((bytes[12] << 8) | bytes[13]), ethernet_type);
-
     printf("\t\tType: ");
     if(((bytes[12] << 8) | bytes[13]) == 0x0806) {
         printf("ARP\n\n\t");
@@ -178,7 +153,5 @@ void ethernet_header(const struct pcap_pkthdr *h, const u_char *bytes) {
     else if(((bytes[12] << 8) | bytes[13]) == 0x0800) {
         printf("IP\n\n\t");
         ip_header(h, bytes);
-    }
-
-    
+    }   
 }
